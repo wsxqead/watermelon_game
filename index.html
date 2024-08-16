@@ -150,7 +150,6 @@
       let engine, render;
       let currentIndex = 0;
       let gameOver = false;
-      let gameOverTimer = null;
 
       const updateNextShape = () => {
         const stella = STELLAS[currentIndex];
@@ -180,60 +179,36 @@
         });
       };
 
-      const startGameOverTimer = () => {
-        if (gameOverTimer) clearTimeout(gameOverTimer);
-        gameOverTimer = setTimeout(() => {
-          gameOver = true;
-          alert(`게임 오버! 최종 점수: ${score}`);
-          Matter.Engine.clear(engine);
-          Matter.Render.stop(render);
-        }, 3000); // 도형이 최상단에 3초간 머물면 게임 오버
-      };
-
       const initGame = () => {
         engine = Matter.Engine.create();
         render = Matter.Render.create({
-          element: document.getElementById("div_1"),
+          element: document.getElementById("game-board-container"),
           canvas: canvas,
           engine: engine,
           options: {
             width: 600,
-            height: 800,
+            height: 1000,
             wireframes: false,
-            background: "#f0f0f0",
+            background: "#ffffff",
           },
         });
 
-        // const ground = Matter.Bodies.rectangle(300, 780, 600, 40, {
-        //   isStatic: true,
-        // });
-        // const leftWall = Matter.Bodies.rectangle(0, 400, 50, 1000, {
-        //   isStatic: true,
-        // });
-        // const rightWall = Matter.Bodies.rectangle(600, 400, 50, 1000, {
-        //   isStatic: true,
-        // });
-        // const endLine = Matter.Bodies.rectangle(300, 0, 600, 10, {
-        //   isStatic: true,
-        //   isSensor: true,
-        // });
-
-        const ground = Matter.Bodies.rectangle(300, 830, 600, 120, {
+        const ground = Matter.Bodies.rectangle(300, 980, 600, 40, {
           isStatic: true,
-          render: { fillStyle: "#a6d0a6" }, // 바닥을 그리는데 색상을 설정
+          render: { fillStyle: "#a6d0a6" },
         });
         const leftWall = Matter.Bodies.rectangle(0, 500, 20, 1000, {
           isStatic: true,
-          render: { fillStyle: "#a6d0a6" }, // 벽을 그리는데 색상을 설정
+          render: { fillStyle: "#a6d0a6" },
         });
         const rightWall = Matter.Bodies.rectangle(600, 500, 20, 1000, {
           isStatic: true,
-          render: { fillStyle: "#a6d0a6" }, // 벽을 그리는데 색상을 설정
+          render: { fillStyle: "#a6d0a6" },
         });
         const endLine = Matter.Bodies.rectangle(300, 0, 600, 10, {
           isStatic: true,
           isSensor: true,
-          render: { fillStyle: "transparent" }, // 끝 라인을 투명하게 설정
+          render: { fillStyle: "transparent" },
         });
 
         Matter.World.add(engine.world, [ground, leftWall, rightWall, endLine]);
@@ -248,7 +223,10 @@
               (bodyA.label === "circle" && bodyB === endLine) ||
               (bodyB.label === "circle" && bodyA === endLine)
             ) {
-              startGameOverTimer();
+              gameOver = true;
+              alert(`게임 오버! 최종 점수: ${score}`);
+              Matter.Engine.clear(engine);
+              Matter.Render.stop(render);
             }
 
             if (bodyA.label === "circle" && bodyB.label === "circle") {
@@ -264,7 +242,7 @@
                 );
 
                 if (currentIndex !== -1 && currentIndex < STELLAS.length - 1) {
-                  const newSize = STELLAS[currentIndex + 1].size / 2; // 반지름을 구하기 위해 2로 나눔
+                  const newSize = STELLAS[currentIndex + 1].size / 2;
                   const newCircle = Matter.Bodies.circle(
                     (circleA.position.x + circleB.position.x) / 2,
                     (circleA.position.y + circleB.position.y) / 2,
@@ -274,8 +252,8 @@
                       render: {
                         sprite: {
                           texture: STELLAS[currentIndex + 1].image,
-                          xScale: (newSize * 2) / 120,
-                          yScale: (newSize * 2) / 120,
+                          xScale: (newSize * 2) / 240,
+                          yScale: (newSize * 2) / 240,
                         },
                       },
                       label: "circle",
@@ -285,7 +263,7 @@
                   Matter.World.add(engine.world, newCircle);
                   Matter.World.remove(engine.world, circleA);
                   Matter.World.remove(engine.world, circleB);
-                  score += newSize * 20; // 점수는 새로운 도형 크기에 비례하여 증가
+                  score += newSize * 20;
                   scoreElement.textContent = score;
                 }
               }
@@ -302,28 +280,29 @@
         if (gameOver) return;
         const stella = STELLAS[currentIndex];
         const ball = Matter.Bodies.circle(x, 100, stella.size / 2, {
-          restitution: 0.7,
+          restitution: 0.5,
+          friction: 0.08,
+          frictionAir: 0.04,
           render: {
             sprite: {
               texture: stella.image,
-              xScale: stella.size / 120,
-              yScale: stella.size / 120,
+              xScale: stella.size / 240,
+              yScale: stella.size / 240,
             },
           },
           label: "circle",
         });
+
         Matter.World.add(engine.world, ball);
-        currentIndex = (currentIndex + 1) % 4; // 클릭으로 1~4번째 도형만 등장
+        currentIndex = (currentIndex + 1) % 4;
         updateNextShape();
       };
 
       startButton.addEventListener("click", () => {
         startButton.style.display = "none";
-        canvas.style.display = "block";
-        populateImagePreview(); // 미리보기 이미지 표시
+        populateImagePreview();
         initGame();
 
-        // 클릭 이벤트로 도형을 떨어뜨림
         canvas.addEventListener("click", (e) => {
           const rect = canvas.getBoundingClientRect();
           const x = e.clientX - rect.left;
