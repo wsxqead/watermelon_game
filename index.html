@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>수박게임 스텔라이브 버전</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.17.1/matter.min.js"></script>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+        background-color: #f0f0f0;
+        display: flex;
+        justify-content: center;
+        height: 100vh;
+        align-items: center;
+      }
+
+      #container {
+        display: flex;
+        align-items: flex-start;
+      }
+
+      #image-preview {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr); /* 4열로 배치 */
+        gap: 10px;
+        margin-right: 20px;
+      }
+
+      .preview-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #a6d0a6;
+        border-radius: 10px;
+        padding: 10px;
+        background-color: #ffffff;
+      }
+
+      #game-board-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      #next-stella-preview {
+        margin-bottom: 10px;
+        text-align: center;
+      }
+
+      #gameCanvas {
+        width: 600px; /* 게임판 너비 확대 */
+        height: 1000px; /* 게임판 높이 확대 */
+        background-color: #ffffff;
+        border: 5px solid #a6d0a6;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      #score {
+        text-align: center;
+        font-size: 24px;
+        margin-top: 20px;
+      }
+
+      .game-over {
+        font-size: 36px;
+        color: red;
+        font-weight: bold;
+        text-align: center;
+      }
+
+      #startButton {
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        margin-bottom: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container">
+      <div class="game-description">
+        <h1 class="title_name">수박게임 스텔라이브 버전</h1>
+        <div><button id="startButton">Start Game</button></div>
+        <div id="image-preview"></div>
+      </div>
+
+      <div id="game-board-container" class="game-board">
+        <div id="next-stella-preview">
+          다음 스텔라: <span id="nextShape"></span>
+        </div>
+        <div id="score">점수: <span id="score">0</span></div>
+        <canvas id="gameCanvas" width="600" height="1000"></canvas>
+      </div>
+    </div>
+    <script>
+      const startButton = document.getElementById("startButton");
+      const canvas = document.getElementById("gameCanvas");
+      const scoreElement = document.getElementById("score");
+      const nextShapeElement = document.getElementById("nextShape");
+      const imagePreviewContainer = document.getElementById("image-preview");
+
+      const STELLAS = [
+        { name: "하나코 나나", image: "public/stella/stella1.png", size: 10 },
+        { name: "유즈하 리코", image: "public/stella/stella2.png", size: 20 },
+        { name: "텐코 시부키", image: "public/stella/stella3.png", size: 30 },
+        { name: "아오쿠모 린", image: "public/stella/stella4.png", size: 40 },
+        { name: "이브", image: "public/stella/stella5.png", size: 50 },
+        { name: "아라하시 타비", image: "public/stella/stella6.png", size: 60 },
+        { name: "아카네 리제", image: "public/stella/stella7.png", size: 70 },
+        { name: "시라유키 히나", image: "public/stella/stella8.png", size: 80 },
+        { name: "네네코 마시로", image: "public/stella/stella9.png", size: 90 },
+        {
+          name: "아야츠노 유니",
+          image: "public/stella/stella10.png",
+          size: 100,
+        },
+        { name: "아이리 칸나", image: "public/stella/stella11.png", size: 110 },
+        { name: "강지", image: "public/stella/stella12.png", size: 120 },
+      ];
+
+      let score = 0;
+      let engine, render;
+      let currentIndex = 0;
+      let gameOver = false;
+      let gameOverTimer = null;
+
+      const updateNextShape = () => {
+        const stella = STELLAS[currentIndex];
+        nextShapeElement.style.backgroundImage = `url(${stella.image})`;
+        nextShapeElement.style.backgroundSize = "contain";
+        nextShapeElement.style.display = "inline-block";
+        nextShapeElement.style.width = "50px";
+        nextShapeElement.style.height = "50px";
+      };
+
+      const populateImagePreview = () => {
+        STELLAS.forEach((stella) => {
+          const previewItem = document.createElement("div");
+          previewItem.className = "preview-item";
+
+          const img = document.createElement("img");
+          img.src = stella.image;
+          img.width = 50;
+
+          const name = document.createElement("p");
+          name.textContent = stella.name;
+
+          previewItem.appendChild(img);
+          previewItem.appendChild(name);
+
+          imagePreviewContainer.appendChild(previewItem);
+        });
+      };
+
+      const startGameOverTimer = () => {
+        if (gameOverTimer) clearTimeout(gameOverTimer);
+        gameOverTimer = setTimeout(() => {
+          gameOver = true;
+          alert(`게임 오버! 최종 점수: ${score}`);
+          Matter.Engine.clear(engine);
+          Matter.Render.stop(render);
+        }, 3000); // 도형이 최상단에 3초간 머물면 게임 오버
+      };
+
+      const initGame = () => {
+        engine = Matter.Engine.create();
+        render = Matter.Render.create({
+          element: document.getElementById("div_1"),
+          canvas: canvas,
+          engine: engine,
+          options: {
+            width: 600,
+            height: 800,
+            wireframes: false,
+            background: "#f0f0f0",
+          },
+        });
+
+        // const ground = Matter.Bodies.rectangle(300, 780, 600, 40, {
+        //   isStatic: true,
+        // });
+        // const leftWall = Matter.Bodies.rectangle(0, 400, 50, 1000, {
+        //   isStatic: true,
+        // });
+        // const rightWall = Matter.Bodies.rectangle(600, 400, 50, 1000, {
+        //   isStatic: true,
+        // });
+        // const endLine = Matter.Bodies.rectangle(300, 0, 600, 10, {
+        //   isStatic: true,
+        //   isSensor: true,
+        // });
+
+        const ground = Matter.Bodies.rectangle(300, 830, 600, 120, {
+          isStatic: true,
+          render: { fillStyle: "#a6d0a6" }, // 바닥을 그리는데 색상을 설정
+        });
+        const leftWall = Matter.Bodies.rectangle(0, 500, 20, 1000, {
+          isStatic: true,
+          render: { fillStyle: "#a6d0a6" }, // 벽을 그리는데 색상을 설정
+        });
+        const rightWall = Matter.Bodies.rectangle(600, 500, 20, 1000, {
+          isStatic: true,
+          render: { fillStyle: "#a6d0a6" }, // 벽을 그리는데 색상을 설정
+        });
+        const endLine = Matter.Bodies.rectangle(300, 0, 600, 10, {
+          isStatic: true,
+          isSensor: true,
+          render: { fillStyle: "transparent" }, // 끝 라인을 투명하게 설정
+        });
+
+        Matter.World.add(engine.world, [ground, leftWall, rightWall, endLine]);
+
+        Matter.Events.on(engine, "collisionStart", (event) => {
+          if (gameOver) return;
+
+          event.pairs.forEach((pair) => {
+            const { bodyA, bodyB } = pair;
+
+            if (
+              (bodyA.label === "circle" && bodyB === endLine) ||
+              (bodyB.label === "circle" && bodyA === endLine)
+            ) {
+              startGameOverTimer();
+            }
+
+            if (bodyA.label === "circle" && bodyB.label === "circle") {
+              const circleA = bodyA;
+              const circleB = bodyB;
+              const circleRadiusA = circleA.circleRadius;
+              const circleRadiusB = circleB.circleRadius;
+
+              if (circleRadiusA === circleRadiusB) {
+                const currentSize = circleRadiusA * 2;
+                const currentIndex = STELLAS.findIndex(
+                  (s) => s.size === currentSize
+                );
+
+                if (currentIndex !== -1 && currentIndex < STELLAS.length - 1) {
+                  const newSize = STELLAS[currentIndex + 1].size / 2; // 반지름을 구하기 위해 2로 나눔
+                  const newCircle = Matter.Bodies.circle(
+                    (circleA.position.x + circleB.position.x) / 2,
+                    (circleA.position.y + circleB.position.y) / 2,
+                    newSize,
+                    {
+                      restitution: 0.7,
+                      render: {
+                        sprite: {
+                          texture: STELLAS[currentIndex + 1].image,
+                          xScale: (newSize * 2) / 120,
+                          yScale: (newSize * 2) / 120,
+                        },
+                      },
+                      label: "circle",
+                    }
+                  );
+
+                  Matter.World.add(engine.world, newCircle);
+                  Matter.World.remove(engine.world, circleA);
+                  Matter.World.remove(engine.world, circleB);
+                  score += newSize * 20; // 점수는 새로운 도형 크기에 비례하여 증가
+                  scoreElement.textContent = score;
+                }
+              }
+            }
+          });
+        });
+
+        Matter.Engine.run(engine);
+        Matter.Render.run(render);
+        updateNextShape();
+      };
+
+      const dropBall = (x) => {
+        if (gameOver) return;
+        const stella = STELLAS[currentIndex];
+        const ball = Matter.Bodies.circle(x, 100, stella.size / 2, {
+          restitution: 0.7,
+          render: {
+            sprite: {
+              texture: stella.image,
+              xScale: stella.size / 120,
+              yScale: stella.size / 120,
+            },
+          },
+          label: "circle",
+        });
+        Matter.World.add(engine.world, ball);
+        currentIndex = (currentIndex + 1) % 4; // 클릭으로 1~4번째 도형만 등장
+        updateNextShape();
+      };
+
+      startButton.addEventListener("click", () => {
+        startButton.style.display = "none";
+        canvas.style.display = "block";
+        populateImagePreview(); // 미리보기 이미지 표시
+        initGame();
+
+        // 클릭 이벤트로 도형을 떨어뜨림
+        canvas.addEventListener("click", (e) => {
+          const rect = canvas.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          dropBall(x);
+        });
+      });
+    </script>
+  </body>
+</html>
