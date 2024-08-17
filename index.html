@@ -426,11 +426,11 @@
                   score += newSize * 20;
                   scoreElement.textContent = score;
 
-                  if (currentIndex + 1 === STELLAS.length - 1) {
+                  if (currentIndex === STELLAS.length - 1) {
                     stellaCreationCount++;
                     if (stellaCreationCount >= targetStellaCount) {
                       alert(
-                        `축하합니다! ${targetStellaCount}개의 스텔라 12를 성공적으로 생성하였습니다!`
+                        `축하합니다! ${targetStellaCount} 모든 스텔라 모집에 성공하였습니다!`
                       );
                       gameOver = true;
                       restartButton.style.display = "block"; // Restart button 표시
