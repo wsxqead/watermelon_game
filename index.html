@@ -68,25 +68,44 @@
         align-items: center;
       }
 
+      .game-board-header {
+        display: flex;
+      }
+
       #next-stella-preview {
         margin-bottom: 10px;
         text-align: center;
-      }
-
-      #gameCanvas {
-        width: 600px; /* 게임판 너비 확대 */
-        height: 1000px; /* 게임판 높이 확대 */
+        padding: 10px;
+        border: 2px solid #a6d0a6;
+        border-radius: 10px;
         background-color: #ffffff;
-        border: 5px solid #a6d0a6;
-        position: relative;
-        overflow: hidden;
         box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        width: 150px;
+        height: 50px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
       }
 
-      #score {
-        text-align: center;
+      #nextShape {
+        display: inline-block;
+        width: 50px;
+        height: 50px;
+        background-size: contain;
+        background-repeat: no-repeat;
+      }
+
+      .score-box {
+        text-align: left;
         font-size: 24px;
-        margin-top: 20px;
+        margin-bottom: 10px;
+        line-height: 50px;
+        padding: 10px;
+        border: 2px solid #a6d0a6;
+        border-radius: 10px;
+        background-color: #ffffff;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        width: 400px;
       }
 
       .game-over {
@@ -166,10 +185,14 @@
       </div>
 
       <div id="game-board-container" class="game-board">
-        <div id="next-stella-preview">
-          다음 스텔라: <span id="nextShape"></span>
+        <div class="game-board-header">
+          <div id="next-stella-preview">
+            다음 스텔라: <span id="nextShape"></span>
+          </div>
+          <div id="score" class="score-box">
+            점수: <span id="score">0</span>
+          </div>
         </div>
-        <div id="score">점수: <span id="score">0</span></div>
         <canvas id="gameCanvas" width="600" height="1000"></canvas>
         <button id="restartButton" style="display: none">Restart Game</button>
         <!-- Restart Button -->
