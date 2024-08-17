@@ -164,12 +164,16 @@
         border-radius: 10px;
         box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
       }
+
       #placeholder-image {
         width: 600px;
         height: 600px;
         border-radius: 10px;
         background-size: cover;
         box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        position: absolute;
+        top: 185px;
+        background-image: url("https://wsxqead.github.io/watermelon_game/stella/riko.png");
       }
     </style>
   </head>
@@ -203,13 +207,8 @@
         <canvas id="gameCanvas" width="600" height="1000"></canvas>
         <button id="restartButton" style="display: none">Restart Game</button>
         <!-- Restart Button -->
+        <div id="placeholder-image"></div>
       </div>
-      <div
-        id="placeholder-image"
-        style="
-          background-image: url('https://wsxqead.github.io/watermelon_game/stella/riko.png');
-        "
-      ></div>
     </div>
     <script>
       const startButton = document.getElementById("startButton");
@@ -219,6 +218,10 @@
       const nextShapeElement = document.getElementById("nextShape");
       const imagePreviewContainer = document.getElementById("image-preview");
       const difficultySelect = document.getElementById("difficulty-select");
+      const gameBoardContainer = document.getElementById(
+        "game-board-container"
+      );
+      const placeholderImage = document.getElementById("placeholder-image");
 
       const STELLAS = [
         {
@@ -502,6 +505,8 @@
 
         startButton.style.display = "none";
         difficultySelect.style.display = "none";
+        placeholderImage.style.display = "none"; // 이미지 숨기기
+        gameBoardContainer.style.display = "flex"; // 게임판 보이기
         populateImagePreview();
         initGame();
 
