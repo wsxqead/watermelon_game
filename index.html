@@ -305,6 +305,7 @@
       let dropAllowed = true; // 드랍 가능 여부를 체크하는 변수
       let targetStellaCount = 1; // 목표 스텔라 개수
       let stellaCreationCount = 0; // 생성된 스텔라의 개수
+      let scoreMultiplier = 1; // 난이도에 따른 점수 배율
 
       const updateNextShape = () => {
         const stella = STELLAS[currentIndex];
@@ -423,7 +424,7 @@
                   Matter.World.add(engine.world, newCircle);
                   Matter.World.remove(engine.world, circleA);
                   Matter.World.remove(engine.world, circleB);
-                  score += newSize * 20;
+                  score += newSize * scoreMultiplier; // 점수 배율 적용
                   scoreElement.textContent = score;
 
                   if (currentIndex + 1 === STELLAS.length - 1) {
@@ -496,12 +497,15 @@
         switch (difficulty) {
           case "easy":
             targetStellaCount = 1;
+            scoreMultiplier = 10;
             break;
           case "medium":
             targetStellaCount = 2;
+            scoreMultiplier = 20;
             break;
           case "hard":
             targetStellaCount = 3;
+            scoreMultiplier = 30;
             break;
         }
 
