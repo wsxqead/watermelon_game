@@ -96,11 +96,54 @@
         text-align: center;
       }
 
-      #startButton {
+      #startButton,
+      #restartButton {
         padding: 10px 20px;
         font-size: 16px;
         cursor: pointer;
         margin-bottom: 20px;
+        background-color: #a6d0a6;
+        border: none;
+        border-radius: 10px;
+        color: white;
+        transition: background-color 0.3s ease;
+      }
+
+      #startButton:hover,
+      #restartButton:hover {
+        background-color: #8db38d;
+      }
+
+      #difficulty-select {
+        margin-bottom: 20px;
+        font-size: 16px;
+        padding: 10px;
+        border-radius: 10px;
+        border: 2px solid #a6d0a6;
+        background-color: #ffffff;
+        color: #333;
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+      }
+
+      #difficulty-select:focus {
+        outline: none;
+        background-color: #f0f0f0;
+        border-color: #8db38d;
+      }
+
+      #difficulty-select option {
+        padding: 10px;
+        background-color: #ffffff;
+      }
+
+      /* New Style for the Group Image */
+      #group-image {
+        margin-top: 20px;
+        margin-right: 20px;
+        width: 600px;
+        max-width: 100%;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
       }
     </style>
   </head>
@@ -108,8 +151,18 @@
     <div id="container">
       <div class="game-description">
         <h1 class="title_name">수박게임 스텔라이브 버전</h1>
+        <select id="difficulty-select">
+          <option value="easy">쉬움</option>
+          <option value="medium">보통</option>
+          <option value="hard">어려움</option>
+        </select>
         <div><button id="startButton">Start Game</button></div>
         <div id="image-preview"></div>
+        <img
+          id="group-image"
+          src="public/stella/group_img.png"
+          alt="Group Image"
+        />
       </div>
 
       <div id="game-board-container" class="game-board">
@@ -118,42 +171,89 @@
         </div>
         <div id="score">점수: <span id="score">0</span></div>
         <canvas id="gameCanvas" width="600" height="1000"></canvas>
+        <button id="restartButton" style="display: none">Restart Game</button>
+        <!-- Restart Button -->
       </div>
     </div>
     <script>
       const startButton = document.getElementById("startButton");
+      const restartButton = document.getElementById("restartButton");
       const canvas = document.getElementById("gameCanvas");
       const scoreElement = document.getElementById("score");
       const nextShapeElement = document.getElementById("nextShape");
       const imagePreviewContainer = document.getElementById("image-preview");
+      const difficultySelect = document.getElementById("difficulty-select");
 
       const STELLAS = [
-        { name: "하나코 나나", image: "public/stella/stella1.png", size: 20 },
-        { name: "유즈하 리코", image: "public/stella/stella2.png", size: 30 },
-        { name: "텐코 시부키", image: "public/stella/stella3.png", size: 40 },
-        { name: "아오쿠모 린", image: "public/stella/stella4.png", size: 50 },
-        { name: "이브", image: "public/stella/stella5.png", size: 60 },
-        { name: "아라하시 타비", image: "public/stella/stella6.png", size: 70 },
-        { name: "아카네 리제", image: "public/stella/stella7.png", size: 80 },
-        { name: "시라유키 히나", image: "public/stella/stella8.png", size: 90 },
+        {
+          name: "하나코 나나",
+          image: "public/stella/sizecustom/stella1.png",
+          size: 35,
+        },
+        {
+          name: "유즈하 리코",
+          image: "public/stella/sizecustom/stella2.png",
+          size: 45,
+        },
+        {
+          name: "텐코 시부키",
+          image: "public/stella/sizecustom/stella3.png",
+          size: 50,
+        },
+        {
+          name: "아오쿠모 린",
+          image: "public/stella/sizecustom/stella4.png",
+          size: 55,
+        },
+        {
+          name: "이브",
+          image: "public/stella/sizecustom/stella5.png",
+          size: 60,
+        },
+        {
+          name: "아라하시 타비",
+          image: "public/stella/sizecustom/stella6.png",
+          size: 65,
+        },
+        {
+          name: "아카네 리제",
+          image: "public/stella/sizecustom/stella7.png",
+          size: 70,
+        },
+        {
+          name: "시라유키 히나",
+          image: "public/stella/sizecustom/stella8.png",
+          size: 75,
+        },
         {
           name: "네네코 마시로",
-          image: "public/stella/stella9.png",
-          size: 100,
+          image: "public/stella/sizecustom/stella9.png",
+          size: 80,
         },
         {
           name: "아야츠노 유니",
-          image: "public/stella/stella10.png",
-          size: 110,
+          image: "public/stella/sizecustom/stella10.png",
+          size: 85,
         },
-        { name: "아이리 칸나", image: "public/stella/stella11.png", size: 120 },
-        { name: "강지", image: "public/stella/stella12.png", size: 130 },
+        {
+          name: "아이리 칸나",
+          image: "public/stella/sizecustom/stella11.png",
+          size: 90,
+        },
+        {
+          name: "강지",
+          image: "public/stella/sizecustom/stella12.png",
+          size: 95,
+        },
       ];
 
       let score = 0;
       let engine, render;
       let currentIndex = 0;
       let gameOver = false;
+      let dropAllowed = true; // 드랍 가능 여부를 체크하는 변수
+      let targetStellaCount = 1; // 목표 스텔라 개수
+      let stellaCreationCount = 0; // 생성된 스텔라의 개수
 
       const updateNextShape = () => {
         const stella = STELLAS[currentIndex];
@@ -209,7 +309,7 @@
           isStatic: true,
           render: { fillStyle: "#a6d0a6" },
         });
-        const endLine = Matter.Bodies.rectangle(300, 0, 600, 10, {
+        const endLine = Matter.Bodies.rectangle(300, 50, 600, 10, {
           isStatic: true,
           isSensor: true,
           render: { fillStyle: "transparent" },
@@ -231,6 +331,7 @@
               alert(`게임 오버! 최종 점수: ${score}`);
               Matter.Engine.clear(engine);
               Matter.Render.stop(render);
+              restartButton.style.display = "block"; // Restart button 표시
             }
 
             if (bodyA.label === "circle" && bodyB.label === "circle") {
@@ -240,13 +341,14 @@
               const circleRadiusB = circleB.circleRadius;
 
               if (circleRadiusA === circleRadiusB) {
-                const currentSize = circleRadiusA * 2;
+                const currentSize = circleRadiusA;
+
                 const currentIndex = STELLAS.findIndex(
                   (s) => s.size === currentSize
                 );
 
                 if (currentIndex !== -1 && currentIndex < STELLAS.length - 1) {
-                  const newSize = STELLAS[currentIndex + 1].size / 2;
+                  const newSize = STELLAS[currentIndex + 1].size;
                   const newCircle = Matter.Bodies.circle(
                     (circleA.position.x + circleB.position.x) / 2,
                     (circleA.position.y + circleB.position.y) / 2,
@@ -259,8 +361,8 @@
                       render: {
                         sprite: {
                           texture: STELLAS[currentIndex + 1].image,
-                          xScale: (newSize * 2) / 260,
-                          yScale: (newSize * 2) / 260,
+                          xScale: 1, // 크기와 맞춰지도록 스케일을 설정
+                          yScale: 1, // 크기와 맞춰지도록 스케일을 설정
                         },
                       },
                       label: "circle",
@@ -272,8 +374,32 @@
                   Matter.World.remove(engine.world, circleB);
                   score += newSize * 20;
                   scoreElement.textContent = score;
+
+                  if (currentIndex + 1 === STELLAS.length - 1) {
+                    stellaCreationCount++;
+                    if (stellaCreationCount >= targetStellaCount) {
+                      alert(
+                        `축하합니다! ${targetStellaCount}개의 스텔라 12를 성공적으로 생성하였습니다!`
+                      );
+                      gameOver = true;
+                      restartButton.style.display = "block"; // Restart button 표시
+                      Matter.Engine.clear(engine);
+                      Matter.Render.stop(render);
+                    }
+                  }
+
+                  // 충돌 후 일정 시간 후에 다시 드랍 가능
+                  setTimeout(() => {
+                    dropAllowed = true;
+                  }, 500); // 0.5초 후 다시 드랍 가능
+                } else {
+                  dropAllowed = true; // 충돌이 있었지만 승격되지 않은 경우 드랍 가능하게 함
                 }
+              } else {
+                dropAllowed = true; // 크기가 다르면 드랍 가능하게 함
               }
+            } else {
+              dropAllowed = true; // 드랍 대상이 아닌 충돌인 경우 드랍 가능하게 함
             }
           });
         });
@@ -284,9 +410,11 @@
       };
 
       const dropBall = (x) => {
-        if (gameOver) return;
+        if (gameOver || !dropAllowed) return;
+        dropAllowed = false; // 드랍을 한 번 했으면 바로 다음 드랍은 불가능하게 함
         const stella = STELLAS[currentIndex];
-        const ball = Matter.Bodies.circle(x, 100, stella.size / 2, {
+        const radius = stella.size; // / 2;
+        const ball = Matter.Bodies.circle(x, 150, radius, {
           restitution: 0.5,
           friction: 0.1,
           frictionStatic: 0.5,
@@ -294,20 +422,38 @@
           render: {
             sprite: {
               texture: stella.image,
-              xScale: stella.size / 260,
-              yScale: stella.size / 260,
+              xScale: 1, // 크기와 맞춰지도록 스케일을 설정 (기본값 1로 설정)
+              yScale: 1, // 크기와 맞춰지도록 스케일을 설정 (기본값 1로 설정)
             },
           },
           label: "circle",
         });
 
         Matter.World.add(engine.world, ball);
-        currentIndex = (currentIndex + 1) % 4;
+        currentIndex = (currentIndex + 1) % 4; // 1~4번째 스텔라만 등장
         updateNextShape();
       };
 
+      const resetGame = () => {
+        location.reload(); // 페이지를 새로 고침하여 게임을 리셋
+      };
+
       startButton.addEventListener("click", () => {
+        const difficulty = difficultySelect.value;
+        switch (difficulty) {
+          case "easy":
+            targetStellaCount = 1;
+            break;
+          case "medium":
+            targetStellaCount = 2;
+            break;
+          case "hard":
+            targetStellaCount = 3;
+            break;
+        }
+
         startButton.style.display = "none";
+        difficultySelect.style.display = "none";
         populateImagePreview();
         initGame();
 
@@ -317,6 +463,8 @@
           dropBall(x);
         });
       });
+
+      restartButton.addEventListener("click", resetGame); // 재시작 버튼 클릭 시 게임 리셋
     </script>
   </body>
 </html>
