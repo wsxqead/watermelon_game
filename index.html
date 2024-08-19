@@ -35,18 +35,21 @@
         background-color: #f0f0f0;
         display: flex;
         justify-content: center;
-        height: 100vh;
         align-items: center;
+        min-height: 100vh;
       }
 
       #container {
         display: flex;
         align-items: flex-start;
+        max-width: 100%;
+        flex-wrap: wrap;
+        justify-content: center;
       }
 
       #image-preview {
         display: grid;
-        grid-template-columns: repeat(4, 1fr); /* 4열로 배치 */
+        grid-template-columns: repeat(4, 1fr);
         gap: 10px;
         margin-right: 20px;
       }
@@ -66,15 +69,19 @@
         display: flex;
         flex-direction: column;
         align-items: center;
+        position: relative;
+        width: 600px; /* 캔버스와 동일한 너비로 설정 */
+        height: 600px; /* 캔버스보다 짧은 직사각형으로 설정 */
       }
 
       .game-board-header {
         display: flex;
+        width: 100%;
+        justify-content: space-between;
+        margin-bottom: 10px;
       }
 
       #next-stella-preview {
-        margin-bottom: 10px;
-        text-align: center;
         padding: 10px;
         border: 2px solid #a6d0a6;
         border-radius: 10px;
@@ -155,7 +162,6 @@
         background-color: #ffffff;
       }
 
-      /* New Style for the Group Image */
       #group-image {
         margin-top: 20px;
         margin-right: 20px;
@@ -166,14 +172,24 @@
       }
 
       #placeholder-image {
-        width: 600px;
-        height: 600px;
+        width: 100%;
+        height: 100%;
         border-radius: 10px;
         background-size: cover;
         box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-        position: absolute;
-        top: 185px;
         background-image: url("https://wsxqead.github.io/watermelon_game/stella/riko.png");
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+
+      #gameCanvas {
+        width: 600px;
+        height: 1000px;
+        background-color: #ffffff;
+        border: 5px solid #a6d0a6;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        display: none; /* 초기에는 숨김 처리 */
       }
     </style>
   </head>
@@ -204,10 +220,9 @@
             점수: <span id="score">0</span>
           </div>
         </div>
+        <div id="placeholder-image"></div>
         <canvas id="gameCanvas" width="600" height="1000"></canvas>
         <button id="restartButton" style="display: none">Restart Game</button>
-        <!-- Restart Button -->
-        <div id="placeholder-image"></div>
       </div>
     </div>
     <script>
@@ -512,6 +527,7 @@
         startButton.style.display = "none";
         difficultySelect.style.display = "none";
         placeholderImage.style.display = "none"; // 이미지 숨기기
+        canvas.style.display = "block";
         gameBoardContainer.style.display = "flex"; // 게임판 보이기
         populateImagePreview();
         initGame();
